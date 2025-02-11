@@ -1,5 +1,6 @@
-from typing import Optional
 import time
+from typing import Optional
+
 import yfinance as yf
 
 import pixeltable as pxt
@@ -15,6 +16,7 @@ start_time = time.time()
 pxt.drop_dir(DIRECTORY, force=True)
 pxt.create_dir(DIRECTORY, if_exists='ignore')
 
+
 # yfinance tool
 @pxt.udf
 def stock_info(ticker: str) -> Optional[dict]:
@@ -22,13 +24,15 @@ def stock_info(ticker: str) -> Optional[dict]:
     stock = yf.Ticker(ticker)
     return stock.info
 
+
 # Financial analyst tool
 @pxt.udf
 def financial_analyst_tool(query: str) -> Optional[dict]:
     """Ask your financial analyst any question."""
     finance_agent = pxt.get_table(f'{DIRECTORY}.financial_analyst')
-    finance_agent.insert([{"prompt": query}])
+    finance_agent.insert([{'prompt': query}])
     return finance_agent.select(finance_agent.answer).collect()[0]
+
 
 # Create prompt with tool outputs
 @pxt.udf
@@ -42,6 +46,7 @@ def create_prompt(question: str, tool_outputs: list[dict]) -> str:
 
     {tool_outputs}
     """
+
 
 ######### 1. Create Finance Analyst Table #########
 finance_agent = pxt.create_table(f'{DIRECTORY}.financial_analyst', {'prompt': pxt.String}, if_exists='ignore')
@@ -88,7 +93,9 @@ portfolio_manager.add_computed_column(
 portfolio_manager.add_computed_column(tool_output=invoke_tools(tools, portfolio_manager.initial_response))
 
 # Create prompt with invoked response
-portfolio_manager.add_computed_column(stock_response_prompt=create_prompt(portfolio_manager.prompt, portfolio_manager.tool_output))
+portfolio_manager.add_computed_column(
+    stock_response_prompt=create_prompt(portfolio_manager.prompt, portfolio_manager.tool_output)
+)
 
 # Send back to OpenAI for final response
 messages = [
@@ -99,16 +106,13 @@ portfolio_manager.add_computed_column(final_response=chat_completions(model=OPEN
 portfolio_manager.add_computed_column(answer=portfolio_manager.final_response.choices[0].message.content)
 
 
-##### Test agents #####
+##### 3. Test agents #####
 finance_agent = pxt.get_table(f'{DIRECTORY}.financial_analyst')
 portfolio_manager = pxt.get_table(f'{DIRECTORY}.portfolio_manager')
+portfolio_manager.insert([{'prompt': 'I need a financial report for NVDIA'}])
 
-portfolio_manager.insert([{"prompt": "I need a financial report for NVDIA"}])
-
-print(finance_agent.select(finance_agent.answer).collect())
-print(portfolio_manager.select(portfolio_manager.answer).collect())
 
 # End timing and print execution time
 end_time = time.time()
 execution_time = end_time - start_time
-print(f"\nTotal execution time: {execution_time:.2f} seconds")
+print(f'\nTotal execution time: {execution_time:.2f} seconds')
