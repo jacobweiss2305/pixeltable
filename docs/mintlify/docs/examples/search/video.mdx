@@ -196,6 +196,25 @@ Pixeltable lets you build comprehensive video search workflows combining both au
     image_sim = frames_view.image_description.similarity("Lex Fridman interviewing a guest in a podcast setting")
     ```
   </Card>
+  
+  <Card title="Video Creation from Frames" icon="film">
+    Build videos from selected frames:
+    ```python
+    # Create a video from frames matching a query
+    matching_frames = frames_view.order_by(image_sim, asc=False).limit(30)
+    
+    # Assemble into a video file
+    video_result = matching_frames.group_by(video_index).select(
+        pxt.functions.video.make_file(
+            matching_frames.pos_msec,  # Order by timestamp
+            matching_frames.frame      # Frame images
+        )
+    ).collect()
+    
+    # Get path to the generated video
+    highlight_video_path = video_result[0]['make_file']
+    ```
+  </Card>
 </CardGroup>
 
 ## Workflow Components

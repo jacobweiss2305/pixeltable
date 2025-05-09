@@ -107,12 +107,41 @@ Iterators are powerful tools for processing large media files. They work seamles
             num_frames=10  # Extract 10 evenly-spaced frames
         )
     )
+    
+    # Create a video from selected frames
+    frames_view.group_by(videos_table).select(
+        pxt.functions.video.make_file(
+            frames_view.pos,  # Frame ordering
+            frames_view.frame  # Frame images
+        )
+    )
     ```
 
     ### Parameters
     - `fps`: Frames per second to extract (can be fractional)
     - `num_frames`: Exact number of frames to extract
     - Only one of `fps` or `num_frames` can be specified
+    
+    ### Creating Videos from Frames
+    After extracting frames, you can use the `make_file` function to assemble them back into a video:
+    
+    ```python
+    # Basic usage
+    result = frames_view.group_by(videos_table).select(
+        pxt.functions.video.make_file(
+            frames_view.pos,  # Frame ordering (can be any sortable expression)
+            frames_view.frame  # Frame images to include in video
+        )
+    ).collect()
+    
+    # The result contains the path to the generated video file
+    video_path = result[0]['make_file']
+    ```
+    
+    The `make_file` function is an aggregation function that:
+    - Takes a frame index (or any expression for ordering frames)
+    - Assembles the sequence of images into a video
+    - Returns the path to the generated video file
   </Tab>
 
   <Tab title="TileIterator">
